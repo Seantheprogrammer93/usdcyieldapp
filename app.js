@@ -62,11 +62,6 @@ async function connect() {
   try {
     provider = new ethers.BrowserProvider(window.ethereum);
 
-    // When enabled, force MetaMask's extension widget (account picker) to open.
-    if ($("openWidgetToggle").checked) {
-      await provider.send("wallet_requestPermissions", [{ eth_accounts: {} }]);
-    }
-
     await provider.send("eth_requestAccounts", []);
     signer = await provider.getSigner();
     account = await signer.getAddress();
@@ -111,6 +106,22 @@ async function disconnect() {
   $("logoutBtn").classList.add("hidden");
   $("connectBtn").classList.remove("hidden");
   setStatus("Logged out.");
+}
+
+// Opens MetaMask's extension widget (account picker) on demand.
+async function openWidget() {
+  if (!window.ethereum) {
+    setStatus("MetaMask not detected. Please install it.", "error");
+    return;
+  }
+  try {
+    await window.ethereum.request({
+      method: "wallet_requestPermissions",
+      params: [{ eth_accounts: {} }],
+    });
+  } catch (err) {
+    setStatus(err.shortMessage || err.message, "error");
+  }
 }
 
 // ---- Vault load ------------------------------------------------------------
@@ -250,13 +261,8 @@ function switchTab(tab) {
 function init() {
   initPresets();
 
-  const toggle = $("openWidgetToggle");
-  toggle.checked = localStorage.getItem("openWidget") === "1";
-  toggle.addEventListener("change", () =>
-    localStorage.setItem("openWidget", toggle.checked ? "1" : "0")
-  );
-
   $("connectBtn").addEventListener("click", connect);
+  $("openWidgetBtn").addEventListener("click", openWidget);
   $("logoutBtn").addEventListener("click", disconnect);
   $("loadVaultBtn").addEventListener("click", loadVault);
   $("depositBtn").addEventListener("click", deposit);
