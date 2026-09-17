@@ -61,6 +61,12 @@ async function connect() {
   }
   try {
     provider = new ethers.BrowserProvider(window.ethereum);
+
+    // When enabled, force MetaMask's extension widget (account picker) to open.
+    if ($("openWidgetToggle").checked) {
+      await provider.send("wallet_requestPermissions", [{ eth_accounts: {} }]);
+    }
+
     await provider.send("eth_requestAccounts", []);
     signer = await provider.getSigner();
     account = await signer.getAddress();
@@ -69,7 +75,8 @@ async function connect() {
     $("accountAddr").textContent = short(account);
     $("network").textContent = net.name === "unknown" ? `Chain ${net.chainId}` : net.name;
     $("account").classList.remove("hidden");
-    $("connectBtn").textContent = "Connected";
+    $("connectBtn").classList.add("hidden");
+    $("logoutBtn").classList.remove("hidden");
 
     if (net.chainId !== MAINNET_CHAIN_ID) {
       setStatus("Preset vaults are on Ethereum mainnet — switch network or paste a matching vault.", "error");
@@ -82,6 +89,28 @@ async function connect() {
   } catch (err) {
     setStatus(err.shortMessage || err.message, "error");
   }
+}
+
+async function disconnect() {
+  // Revoke permissions so the next connect prompts the account picker again.
+  try {
+    await window.ethereum?.request({
+      method: "wallet_revokePermissions",
+      params: [{ eth_accounts: {} }],
+    });
+  } catch (_) {
+    // Not all wallets support revoke; ignore and just reset local state.
+  }
+
+  provider = signer = account = null;
+  vault = asset = null;
+
+  $("account").classList.add("hidden");
+  $("vaultInfo").classList.add("hidden");
+  $("actions").classList.add("hidden");
+  $("logoutBtn").classList.add("hidden");
+  $("connectBtn").classList.remove("hidden");
+  setStatus("Logged out.");
 }
 
 // ---- Vault load ------------------------------------------------------------
@@ -220,7 +249,15 @@ function switchTab(tab) {
 
 function init() {
   initPresets();
+
+  const toggle = $("openWidgetToggle");
+  toggle.checked = localStorage.getItem("openWidget") === "1";
+  toggle.addEventListener("change", () =>
+    localStorage.setItem("openWidget", toggle.checked ? "1" : "0")
+  );
+
   $("connectBtn").addEventListener("click", connect);
+  $("logoutBtn").addEventListener("click", disconnect);
   $("loadVaultBtn").addEventListener("click", loadVault);
   $("depositBtn").addEventListener("click", deposit);
   $("withdrawBtn").addEventListener("click", withdraw);

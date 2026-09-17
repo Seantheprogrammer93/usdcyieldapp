@@ -42,6 +42,28 @@ h1 {
   margin: 0;
 }
 
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--muted);
+  margin: 0 4px 14px;
+  cursor: pointer;
+}
+
+.toggle input {
+  width: auto;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
 h2 {
   font-size: 17px;
   margin: 0 0 14px;
