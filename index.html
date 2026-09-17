@@ -85,6 +85,17 @@
         </div>
       </section>
 
+      <section id="yieldCard" class="card hidden">
+        <div class="chart-head">
+          <h2>Projected yield</h2>
+          <span id="apyBadge" class="badge">—</span>
+        </div>
+        <canvas id="yieldChart" height="200"></canvas>
+        <p class="chart-note">
+          12-month projection of your deposit at the current net APY. Actual yield is variable.
+        </p>
+      </section>
+
       <p id="status" class="status"></p>
 
       <footer class="footer">
@@ -96,6 +107,7 @@
     </main>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

@@ -217,3 +217,30 @@ select:focus {
 .footer a {
   color: var(--accent);
 }
+
+.chart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.chart-head h2 {
+  margin: 0;
+}
+
+.badge {
+  background: rgba(51, 214, 159, 0.12);
+  color: var(--green);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.chart-note {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 12px 0 0;
+  line-height: 1.4;
+}

@@ -34,6 +34,10 @@ const MAINNET_CHAIN_ID = 1n;
 
 let provider, signer, account;
 let vault, asset, assetDecimals, assetSymbol;
+let chainId = 1;
+let yieldChart = null;
+let netApy = null;
+let depositedAssets = 0;
 
 const $ = (id) => document.getElementById(id);
 
@@ -67,6 +71,7 @@ async function connect() {
     account = await signer.getAddress();
 
     const net = await provider.getNetwork();
+    chainId = Number(net.chainId);
     $("accountAddr").textContent = short(account);
     $("network").textContent = net.name === "unknown" ? `Chain ${net.chainId}` : net.name;
     $("account").classList.remove("hidden");
@@ -99,10 +104,17 @@ async function disconnect() {
 
   provider = signer = account = null;
   vault = asset = null;
+  netApy = null;
+  depositedAssets = 0;
+  if (yieldChart) {
+    yieldChart.destroy();
+    yieldChart = null;
+  }
 
   $("account").classList.add("hidden");
   $("vaultInfo").classList.add("hidden");
   $("actions").classList.add("hidden");
+  $("yieldCard").classList.add("hidden");
   $("logoutBtn").classList.add("hidden");
   $("connectBtn").classList.remove("hidden");
   setStatus("Logged out.");
@@ -112,6 +124,11 @@ async function disconnect() {
 async function openWidget() {
   if (!window.ethereum) {
     setStatus("MetaMask not detected. Please install it.", "error");
+    return;
+  }
+  // Don't trigger a connect prompt — only open the widget if already connected.
+  if (!account) {
+    setStatus("Connect MetaMask first to open the widget.", "error");
     return;
   }
   try {
@@ -156,6 +173,9 @@ async function loadVault() {
     $("vaultInfo").classList.remove("hidden");
     $("actions").classList.remove("hidden");
 
+    netApy = await fetchApy(vault.target);
+    if (netApy != null) $("yieldCard").classList.remove("hidden");
+
     await refreshBalances();
     setStatus("");
   } catch (err) {
@@ -174,6 +194,78 @@ async function refreshBalances() {
   $("walletBalance").textContent = `${fmt(wallet, assetDecimals)} ${assetSymbol}`;
   $("depositBalance").textContent = `${fmt(deposited, assetDecimals)} ${assetSymbol}`;
   $("tvl").textContent = `${fmt(total, assetDecimals, 0)} ${assetSymbol}`;
+
+  depositedAssets = Number(ethers.formatUnits(deposited, assetDecimals));
+  renderYield();
+}
+
+// ---- Yield chart -----------------------------------------------------------
+
+// Fetches the vault's net APY (rewards included, fees deducted) from the Morpho API.
+async function fetchApy(address) {
+  const query = `query ($address: String!, $chainId: Int!) {
+    vaultByAddress(address: $address, chainId: $chainId) {
+      state { netApy }
+    }
+  }`;
+  try {
+    const res = await fetch("https://api.morpho.org/graphql", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, variables: { address, chainId } }),
+    });
+    const json = await res.json();
+    const apy = json?.data?.vaultByAddress?.state?.netApy;
+    return typeof apy === "number" ? apy : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function renderYield() {
+  if (netApy == null) return;
+
+  $("apyBadge").textContent = `${(netApy * 100).toFixed(2)}% APY`;
+
+  const principal = depositedAssets > 0 ? depositedAssets : 1000; // sample if no deposit
+  const labels = [];
+  const values = [];
+  for (let m = 0; m <= 12; m++) {
+    labels.push(m === 0 ? "Now" : `${m}m`);
+    values.push(principal * Math.pow(1 + netApy, m / 12));
+  }
+
+  const ctx = $("yieldChart");
+  if (yieldChart) yieldChart.destroy();
+  yieldChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: `Projected balance (${assetSymbol})`,
+          data: values,
+          borderColor: "#33d69f",
+          backgroundColor: "rgba(51, 214, 159, 0.12)",
+          fill: true,
+          tension: 0.3,
+          pointRadius: 2,
+        },
+      ],
+    },
+    options: {
+      plugins: { legend: { labels: { color: "#8a93a6" } } },
+      scales: {
+        x: { ticks: { color: "#8a93a6" }, grid: { color: "#232a36" } },
+        y: { ticks: { color: "#8a93a6" }, grid: { color: "#232a36" } },
+      },
+    },
+  });
+
+  const isSample = depositedAssets <= 0;
+  $("yieldCard").querySelector(".chart-note").textContent = isSample
+    ? `Sample projection on 1,000 ${assetSymbol} at the current net APY. Deposit to see yours.`
+    : "12-month projection of your deposit at the current net APY. Actual yield is variable.";
 }
 
 // ---- Actions ---------------------------------------------------------------
