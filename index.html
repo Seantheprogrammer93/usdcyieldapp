@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Morpho Earn — Minimal</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="header">
+        <h1>Morpho Earn</h1>
+        <button id="connectBtn" class="btn btn-primary">Connect MetaMask</button>
+      </header>
+
+      <section id="account" class="card hidden">
+        <div class="row">
+          <span class="label">Account</span>
+          <span id="accountAddr" class="mono"></span>
+        </div>
+        <div class="row">
+          <span class="label">Network</span>
+          <span id="network" class="mono"></span>
+        </div>
+      </section>
+
+      <section class="card">
+        <label class="label" for="vaultSelect">Vault</label>
+        <select id="vaultSelect"></select>
+        <input
+          id="vaultAddress"
+          class="mono"
+          placeholder="Or paste a vault address (0x…)"
+          spellcheck="false"
+        />
+        <button id="loadVaultBtn" class="btn">Load vault</button>
+      </section>
+
+      <section id="vaultInfo" class="card hidden">
+        <h2 id="vaultName">—</h2>
+        <div class="grid">
+          <div>
+            <span class="label">Asset</span>
+            <span id="assetSymbol" class="value">—</span>
+          </div>
+          <div>
+            <span class="label">Your wallet</span>
+            <span id="walletBalance" class="value">—</span>
+          </div>
+          <div>
+            <span class="label">Your deposit</span>
+            <span id="depositBalance" class="value">—</span>
+          </div>
+          <div>
+            <span class="label">Vault TVL</span>
+            <span id="tvl" class="value">—</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="actions" class="card hidden">
+        <div class="tabs">
+          <button class="tab active" data-tab="deposit">Deposit</button>
+          <button class="tab" data-tab="withdraw">Withdraw</button>
+        </div>
+
+        <div id="depositPanel" class="panel">
+          <div class="input-row">
+            <input id="depositAmount" type="number" min="0" step="any" placeholder="0.0" />
+            <button id="maxDepositBtn" class="btn btn-ghost">Max</button>
+          </div>
+          <button id="depositBtn" class="btn btn-primary full">Deposit</button>
+        </div>
+
+        <div id="withdrawPanel" class="panel hidden">
+          <div class="input-row">
+            <input id="withdrawAmount" type="number" min="0" step="any" placeholder="0.0" />
+            <button id="maxWithdrawBtn" class="btn btn-ghost">Max</button>
+          </div>
+          <button id="withdrawBtn" class="btn btn-primary full">Withdraw</button>
+        </div>
+      </section>
+
+      <p id="status" class="status"></p>
+
+      <footer class="footer">
+        Non-custodial. Built on
+        <a href="https://docs.morpho.org/developers/" target="_blank" rel="noopener"
+          >Morpho Vaults (ERC-4626)</a
+        >. Always verify the vault address.
+      </footer>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
